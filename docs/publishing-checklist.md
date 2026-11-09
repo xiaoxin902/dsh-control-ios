@@ -8,7 +8,7 @@
 
 ## 转公开前确认
 
-1. `README.md` 里"巨魔版未在真机验证"这段仍然属实
+1. `README.md` 描述与当前版本一致（1.3.2）
 2. `LICENSE` 的年份与署名（8848, 2026）
 3. `apelin-project.json` 里的包标识 `bc.8848.dshcontrol` 是你要长期用的
 4. 仓库里不含 token、密钥、设备 UDID、真实的会话 id

@@ -16,64 +16,37 @@
 - **导出**：把最新会话转成 Markdown（用户消息、回复、折叠的思考过程、工具调用摘要），
   然后弹 iOS 系统分享面板
 
-## 两个发行版
-
-| | 越狱版 | 巨魔（TrollStore）版 |
-|---|---|---|
-| 产物 | `bc.8848.dshcontrol_x.y.z_iphoneos-arm64.deb` | `DSHControl.tipa` |
-| 安装位置 | `/var/jb/Applications`（rootless / roothide） | 普通 App 容器 |
-| 控制方式 | 包内 launchd 守护进程（mobile）+ 一个 root 守护进程（插件安装） | App 直接 `posix_spawn` / `kill`，无守护进程 |
-| node 来源 | bootstrap 里的 `node22` | 打进 App 包内，或 `~/Documents/dsh-ts/config.json` 指定 |
-| 开机自启 | 依赖 dsh 自己的 LaunchDaemon | **未实现**（见限制） |
-| 状态 | 本机日常使用中 | **未在真机验证过** |
-
 ## 依赖
 
-- 一台**越狱**设备（Dopamine rootless / roothide），或一台能用 TrollStore 的设备
+- 一台**越狱**设备（Dopamine rootless / roothide）
 - 已经装好的 dsh：默认在 `/var/mobile/Documents/dsh`，含 `node22` 运行时与 `node_modules`
 
 ## 安装
 
-**越狱版**：用包管理器安装 deb，或本地装：
+用包管理器安装 deb，或本地装：
 
 ```
-dpkg -i bc.8848.dshcontrol_1.3.2_iphoneos-arm64.deb   # roothide 用户装 roothide 构建
+dpkg -i bc.8848.dshcontrol_1.3.2_iphoneos-arm64.deb
 ```
 
-**巨魔版**：TrollStore → 右上角 `+` → 选 `.tipa`。安装前先看 [trollstore/README.md](trollstore/README.md)。
+roothide 用户装 roothide 构建，rootless 用户装 rootless 构建，两者路径前缀不同，不能混装。
+
+## 结构
+
+App 里没做的事情交给两个 launchd 守护进程，它们都以最小身份运行：
+
+- `bc.8848.dshcontrol.control`（**mobile** 身份）：由 App 写请求文件唤醒，负责启动/停止 dsh、跑会话导出
+- `bc.8848.dshcontrol.installer`（**root** 身份）：只从 `inbox/` 安装受限的插件包
 
 ## 构建
 
-越狱版由 Apelin 的构建描述驱动（`apelin-project.json`），需要 clang 工具链与 iPhoneOS SDK：
+由 Apelin 的构建描述驱动（`apelin-project.json`），需要 clang 工具链与 iPhoneOS SDK：
 
 ```
 apelin_project_build          # 在 Apelin IDE 里
 ```
 
-巨魔版是独立脚本：
-
-```sh
-SDKROOT=/path/to/iPhoneOS.sdk ./trollstore/build-tipa.sh build
-# 想把 node22 一起打进包内：
-SDKROOT=/path/to/iPhoneOS.sdk NODE_BINARY=/path/to/node22 ./trollstore/build-tipa.sh build
-```
-
 iPhoneOS SDK 不能随仓库分发，请自备。
-
-## 配置（巨魔版）
-
-`/var/mobile/Documents/dsh-ts/config.json`，缺字段用默认值：
-
-```json
-{
-  "dshDir":   "/var/mobile/Documents/dsh",
-  "nodePath": "/var/mobile/Documents/dsh-ts/bin/node22",
-  "path":     "/var/jb/usr/bin:/usr/bin:/bin",
-  "tmpDir":   "/var/mobile/Documents/dsh/tmp"
-}
-```
-
-越狱版不需要这个文件，路径与原来一致。
 
 ## 目录
 
@@ -85,7 +58,7 @@ Sources/                App 与守护进程共用的 Objective-C 源码
   DSHWebViewController.m 全屏 WebView 与注入的垫片脚本
 Packaging/              deb 布局、entitlements、launchd plist、安装脚本
 tools/                  dsh-session-export.js（会话 → Markdown）、tweak 构建脚本
-trollstore/             TrollStore 版：构建脚本、Info.plist、entitlements、说明
+docs/                   发布相关说明
 ```
 
 ## 诊断
@@ -101,13 +74,6 @@ trollstore/             TrollStore 版：构建脚本、Info.plist、entitlement
 - root 守护进程只做一件事：从 `/var/mobile/Documents/dsh/inbox` 安装**受限**的插件包
   （拒绝 preinst/postinst 等维护者脚本、拒绝 setuid、只允许写入插件目录）。
 - App 不联网，除 dsh 的本地端口和它的 WebView 外没有外部连接。
-
-## 已知限制
-
-- **巨魔版没有在真机上跑过**：只验证了编译、双架构、签名与 `.tipa` 结构。
-  最大的不确定点是 AMFI——包内嵌套的 `node22` 能否被 TrollStore 一起签名并通过运行检查。
-- 巨魔版没有开机自启；也**不带**插件安装守护进程（那需要 root）。
-- 越狱版停止 dsh 时先 `kill(SIGTERM)`，失败才用 task port，两者都只在越狱环境成立。
 
 ## 许可
 
