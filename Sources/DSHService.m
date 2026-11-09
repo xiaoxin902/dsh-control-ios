@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 #import "DSHService.h"
 
+#import "DSHConfig.h"
+
 #import "ApelinBootstrap.h"
 
 #import <errno.h>
@@ -16,11 +18,15 @@
 #import <sys/time.h>
 #import <netinet/in.h>
 #import <spawn.h>
+#import <sys/wait.h>
 #import <unistd.h>
 
 NSString *const DSHDirectoryPath = @"/var/mobile/Documents/dsh";
 NSString *const DSHLogPath = @"/tmp/dsh-web.log";
 const uint16_t DSHWebPort = 3080;
+NSString *const DSHHelperResultPath = @"/tmp/dsh-helper.json";
+NSString *const DSHControlRequestPath = @"/var/mobile/Documents/dsh/.dshcontrol-request";
+NSString *const DSHControlResultPath = @"/var/mobile/Documents/dsh/.dshcontrol-result";
 
 static NSString *const DSHLauncherName = @"dsh";
 static NSString *const DSHPIDFileName = @"dsh-web.pid";
@@ -144,6 +150,9 @@ static BOOL DSHConnectSucceeds(uint16_t port, NSTimeInterval timeout) {
         data = [NSData dataWithContentsOfFile:@"/private/var/tmp/dsh-web.log"];
     }
     if (data.length == 0) {
+        NSError *error = nil;
+        [NSData dataWithContentsOfFile:DSHLogPath options:0 error:&error];
+        DSHLog(@"token: cannot read %@ (%@)", DSHLogPath, error.localizedDescription ?: @"unknown");
         return nil;
     }
     NSString *text = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
@@ -158,6 +167,34 @@ static BOOL DSHConnectSucceeds(uint16_t port, NSTimeInterval timeout) {
         return nil;
     }
     return [text substringWithRange:last.range];
+}
+
++ (void)requestFrontPage {
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0) {
+        return;
+    }
+    struct timeval timeout;
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
+    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(DSHWebPort);
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+    if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
+        const char *request = "GET / HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n";
+        if (write(fd, request, strlen(request)) > 0) {
+            char buffer[256];
+            (void)read(fd, buffer, sizeof(buffer));
+        }
+        DSHLog(@"token: poked the web server so it prints its address");
+    }
+    close(fd);
 }
 
 + (NSInteger)currentPID {
@@ -231,10 +268,14 @@ static BOOL DSHConnectSucceeds(uint16_t port, NSTimeInterval timeout) {
     posix_spawn_file_actions_addopen(&actions, STDOUT_FILENO, "/dev/null", O_WRONLY, 0);
     posix_spawn_file_actions_addopen(&actions, STDERR_FILENO, "/dev/null", O_WRONLY, 0);
 
+    // ARC: the UTF8String pointers must outlive posix_spawn, so the strings
+    // they come from are held in locals until the function returns.
+    NSString *pathEnv = [@"PATH=" stringByAppendingString:DSHConfigSearchPath()];
+    NSString *tmpEnv = [@"TMPDIR=" stringByAppendingString:DSHConfigTmpDirectory()];
     char *envp[] = {
         "HOME=/var/mobile",
-        "PATH=/var/jb/usr/local/bin:/var/jb/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin",
-        "TMPDIR=/var/mobile/Documents/dsh/tmp",
+        (char *)pathEnv.UTF8String,
+        (char *)tmpEnv.UTF8String,
         NULL
     };
     const char *script = launcher.fileSystemRepresentation;
@@ -359,6 +400,204 @@ static BOOL DSHConnectSucceeds(uint16_t port, NSTimeInterval timeout) {
         return;
     }
     [[NSFileManager defaultManager] removeItemAtPath:DSHPathForFileName(DSHPIDFileName) error:NULL];
+}
+
++ (NSString *)exportLatestSessionWithError:(NSError **)error {
+    NSFileManager *manager = NSFileManager.defaultManager;
+    // The app is sandboxed for its own container plus the user's Documents
+    // folder: ~/.dsh (a dot directory directly under /var/mobile) is
+    // invisible to it, so the bootstrap copy the package installs is the one
+    // that matters. The others are fallbacks for hand-made installs.
+    NSString *bootstrapCopy = ApelinBootstrapPath(@"/usr/libexec/dsh-session-export.js");
+    NSArray<NSString *> *candidates = @[
+        bootstrapCopy ?: @"/usr/libexec/dsh-session-export.js",
+        @"/var/mobile/Documents/dsh/bin/dsh-session-export.js",
+        @"/var/mobile/.dsh/bin/dsh-session-export.js",
+    ];
+    NSString *script = nil;
+    for (NSString *candidate in candidates) {
+        if ([manager fileExistsAtPath:candidate]) {
+            script = candidate;
+            break;
+        }
+    }
+    if (script.length == 0) {
+        NSString *bundled = [NSBundle.mainBundle pathForResource:@"dsh-session-export" ofType:@"js"];
+        if (bundled.length > 0) {
+            script = bundled;
+        }
+    }
+    if (script.length == 0) {
+        DSHLog(@"export: script missing, tried %@", candidates);
+        if (error) {
+            *error = DSHMakeError(ENOENT, @"找不到导出脚本 dsh-session-export.js（重装本包即可修复）");
+        }
+        return nil;
+    }
+    DSHLog(@"export: script=%@", script);
+
+    NSString *node = DSHConfigNodePath();
+    if (![manager isExecutableFileAtPath:node]) {
+        DSHLog(@"export: node missing, configured %@", node);
+        if (error) {
+            *error = DSHMakeError(ENOENT, @"找不到 node22，请在 dsh-ts/config.json 里写 nodePath");
+        }
+        return nil;
+    }
+
+    posix_spawn_file_actions_t actions;
+    posix_spawn_file_actions_init(&actions);
+    posix_spawn_file_actions_addopen(&actions, STDIN_FILENO, "/dev/null", O_RDONLY, 0);
+    posix_spawn_file_actions_addopen(&actions, STDOUT_FILENO, "/dev/null", O_WRONLY, 0);
+    posix_spawn_file_actions_addopen(&actions, STDERR_FILENO, "/dev/null", O_WRONLY, 0);
+
+    char *envp[] = {
+        "HOME=/var/mobile",
+        "PATH=/var/jb/usr/local/bin:/var/jb/usr/bin:/usr/bin:/bin",
+        "TMPDIR=/tmp",
+        NULL
+    };
+    const char *nodePath = node.fileSystemRepresentation;
+    const char *scriptPath = script.fileSystemRepresentation;
+    char *argv[] = { (char *)nodePath, "--jitless", (char *)scriptPath, NULL };
+
+    pid_t pid = 0;
+    int result = posix_spawn(&pid, nodePath, &actions, NULL, argv, envp);
+    posix_spawn_file_actions_destroy(&actions);
+    if (result != 0) {
+        DSHLog(@"export: spawn -> %s", strerror(result));
+        if (error) {
+            *error = DSHMakeError(result, @"无法运行导出脚本");
+        }
+        return nil;
+    }
+
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0) {
+        if (error) {
+            *error = DSHMakeError(errno, @"导出脚本没有正常结束");
+        }
+        return nil;
+    }
+    BOOL ok = WIFEXITED(status) && WEXITSTATUS(status) == 0;
+    DSHLog(@"export: exit=%d status=%d", ok, status);
+
+    NSString *exportPath = @"/var/mobile/Documents/dsh-backup/exports/latest.md";
+    NSDictionary *attributes = [manager attributesOfItemAtPath:exportPath error:NULL];
+    if (!attributes || [attributes fileSize] == 0) {
+        if (error) {
+            *error = DSHMakeError(ok ? ENOENT : EIO,
+                                  @"导出没有产出文件，请确认 dsh 会话目录存在");
+        }
+        return nil;
+    }
+    return exportPath;
+}
+
+
++ (void)runCapabilitySelfCheck {
+    NSFileManager *manager = NSFileManager.defaultManager;
+    NSString *shell = ApelinBootstrapPath(@"/bin/sh");
+    NSString *launcher = DSHPathForFileName(DSHLauncherName);
+    DSHLog(@"selfcheck: shell=%@ exists=%d exec=%d",
+           shell, [manager fileExistsAtPath:shell], [manager isExecutableFileAtPath:shell]);
+    DSHLog(@"selfcheck: launcher exists=%d exec=%d",
+           [manager fileExistsAtPath:launcher], [manager isExecutableFileAtPath:launcher]);
+
+    if (shell) {
+        posix_spawn_file_actions_t actions;
+        posix_spawn_file_actions_init(&actions);
+        posix_spawn_file_actions_addopen(&actions, STDOUT_FILENO, "/private/var/tmp/dsh-spawn-check.log",
+                                         O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        posix_spawn_file_actions_addopen(&actions, STDERR_FILENO, "/private/var/tmp/dsh-spawn-check.log",
+                                         O_WRONLY | O_APPEND, 0644);
+        char *argv[] = { (char *)shell.fileSystemRepresentation, "-c", "echo spawn-ok", NULL };
+        pid_t childPID = 0;
+        int result = posix_spawn(&childPID, shell.fileSystemRepresentation, &actions, NULL, argv, NULL);
+        posix_spawn_file_actions_destroy(&actions);
+        DSHLog(@"selfcheck: spawn %@ -> %d (%s)", shell, result, result == 0 ? "ok" : strerror(result));
+        if (result == 0) {
+            int status = 0;
+            waitpid(childPID, &status, 0);
+        }
+    }
+
+    NSInteger dshPID = [self currentPID];
+    if (dshPID > 0) {
+        int signaled = kill((pid_t)dshPID, 0);
+        DSHLog(@"selfcheck: kill(%ld, 0) -> %d (%s)", (long)dshPID, signaled,
+               signaled == 0 ? "ok" : strerror(errno));
+    }
+}
+
++ (BOOL)controlDaemonInstalled {
+    NSString *plist = ApelinBootstrapPath(@"/Library/LaunchDaemons/bc.8848.dshcontrol.control.plist");
+    return plist.length > 0 && [NSFileManager.defaultManager fileExistsAtPath:plist];
+}
+
++ (BOOL)requestControlCommand:(NSString *)command {
+    NSDictionary *request = @{ @"command": command ?: @"",
+                               @"time": @(NSDate.date.timeIntervalSince1970) };
+    NSError *error = nil;
+    NSData *data = [NSJSONSerialization dataWithJSONObject:request options:0 error:&error];
+    if (!data) {
+        DSHLog(@"daemon: encode failed %@", error.localizedDescription);
+        return NO;
+    }
+    BOOL written = [data writeToFile:DSHControlRequestPath atomically:YES];
+    DSHLog(@"daemon: request %@ written=%d", command, written);
+    return written;
+}
+
++ (NSDictionary *)controlResultNewerThan:(NSTimeInterval)timestamp {
+    NSDictionary *attributes = [NSFileManager.defaultManager attributesOfItemAtPath:DSHControlResultPath error:NULL];
+    NSDate *modified = attributes[NSFileModificationDate];
+    if (!modified || modified.timeIntervalSince1970 < timestamp) {
+        return nil;
+    }
+    NSData *data = [NSData dataWithContentsOfFile:DSHControlResultPath];
+    if (data.length == 0) {
+        return nil;
+    }
+    id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
+    return [object isKindOfClass:NSDictionary.class] ? object : nil;
+}
+
++ (void)removeControlRequest {
+    [NSFileManager.defaultManager removeItemAtPath:DSHControlRequestPath error:NULL];
+}
+
++ (BOOL)writeHelperResult:(NSDictionary *)result command:(NSString *)command {
+    NSMutableDictionary *payload = [result mutableCopy] ?: [NSMutableDictionary dictionary];
+    payload[@"command"] = command ?: @"";
+    payload[@"date"] = @(NSDate.date.timeIntervalSince1970);
+    NSError *error = nil;
+    NSData *data = [NSJSONSerialization dataWithJSONObject:payload options:0 error:&error];
+    if (!data) {
+        DSHLog(@"helper result: encode failed %@", error.localizedDescription);
+        return NO;
+    }
+    BOOL written = [data writeToFile:DSHHelperResultPath atomically:YES];
+    DSHLog(@"helper result: written=%d %@", written, payload);
+    return written;
+}
+
++ (NSDictionary *)helperResultNewerThan:(NSTimeInterval)timestamp {
+    NSDictionary *attributes = [NSFileManager.defaultManager attributesOfItemAtPath:DSHHelperResultPath error:NULL];
+    NSDate *modified = attributes[NSFileModificationDate];
+    if (!modified || modified.timeIntervalSince1970 < timestamp) {
+        return nil;
+    }
+    NSData *data = [NSData dataWithContentsOfFile:DSHHelperResultPath];
+    if (data.length == 0) {
+        return nil;
+    }
+    id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
+    return [object isKindOfClass:NSDictionary.class] ? object : nil;
+}
+
++ (void)removeHelperResult {
+    [NSFileManager.defaultManager removeItemAtPath:DSHHelperResultPath error:NULL];
 }
 
 @end

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+	Started by launchd (as root) whenever something is written into the inbox
+	directory. It installs .deb packages that carry nothing but a plugin dylib
+	and its filter, and refuses everything else. See dshcontrol-installer.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>bc.8848.dshcontrol.installer</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>@PREFIX@/bin/sh</string>
+		<string>@PREFIX@/usr/libexec/dshcontrol-installer</string>
+	</array>
+	<key>WatchPaths</key>
+	<array>
+		<string>@ROOTFS@/var/mobile/Documents/dsh/inbox</string>
+	</array>
+	<key>StartInterval</key>
+	<integer>5</integer>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>ThrottleInterval</key>
+	<integer>1</integer>
+	<key>ProcessType</key>
+	<string>Background</string>
+</dict>
+</plist>

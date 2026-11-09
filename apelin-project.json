@@ -60,8 +60,29 @@
       "frameworks": [
         "Foundation",
         "UIKit",
-        "SafariServices",
+        "WebKit",
         "QuartzCore"
+      ]
+    },
+    {
+      "id": "helper",
+      "type": "app",
+      "name": "DSHHelper",
+      "sources": [
+        "Sources/Helper/*.m",
+        "Sources/DSHService.m",
+        "Sources/DSHConfig.m"
+      ],
+      "headerSearchPaths": [
+        "Sources"
+      ],
+      "resources": [],
+      "infoPlist": "Resources/HelperInfo.plist",
+      "entitlements": "Packaging/Helper.entitlements",
+      "objcARC": true,
+      "frameworks": [
+        "Foundation",
+        "UIKit"
       ]
     }
   ],
@@ -96,20 +117,52 @@
         "type": "sign",
         "product": "app",
         "identity": "adhoc"
+      },
+      {
+        "type": "compile",
+        "product": "helper"
+      },
+      {
+        "type": "link",
+        "product": "helper"
+      },
+      {
+        "type": "bundle-resources",
+        "product": "helper"
+      },
+      {
+        "type": "lipo",
+        "product": "helper"
+      },
+      {
+        "type": "dsym",
+        "product": "helper"
+      },
+      {
+        "type": "strip",
+        "product": "helper",
+        "style": "non-global"
+      },
+      {
+        "type": "sign",
+        "product": "helper",
+        "identity": "adhoc"
       }
     ]
   },
   "package": {
     "id": "bc.8848.dshcontrol",
     "name": "DSH",
-    "version": "1.0.0",
+    "version": "1.3.2",
     "description": "控制本机 DeepSeek Harness（dsh）Web 服务：开机自启开关、运行状态、一键启动/停止与全屏打开",
     "longDescription": [
       "控制这台设备上已经装好的 DeepSeek Harness（dsh）。",
       "· 开机自启开关：创建/删除 /var/mobile/Documents/dsh/autostart.off",
       "· 服务状态：探测 127.0.0.1:3080，显示运行中/未运行与 PID",
-      "· 打开：从 /tmp/dsh-web.log 取最新 token 链接并打开",
-      "· 启动/停止：执行 dsh 启动脚本，或结束 dsh-web.pid 里的进程",
+      "· 打开：从 /tmp/dsh-web.log 取最新 token 链接，全屏 WKWebView 打开，并为旧系统注入 JS 垫片",
+      "· 启动/停止：由包内的 launchd 守护进程执行，不跳转界面",
+      "· 打开前若日志里没有 token，会先请求一次服务端让它打印地址",
+      "· 导出：调用 dsh-session-export.js 把最新会话转成 Markdown，并弹系统分享面板",
       "诊断日志：/tmp/dsh-control.log"
     ],
     "icon": "https://owngoal-dev.github.io/Apelin/icons/wiki.qaq.apelin.dev.app.png",
@@ -122,7 +175,44 @@
       {
         "path": "/Applications/DSHControl.app",
         "product": "app"
+      },
+      {
+        "path": "/Applications/DSHHelper.app",
+        "product": "helper"
+      },
+      {
+        "path": "/usr/libexec/dshcontrol-control",
+        "file": "Packaging/dshcontrol-control.sh",
+        "mode": "0755"
+      },
+      {
+        "path": "/usr/libexec/dsh-session-export.js",
+        "file": "tools/dsh-session-export.js",
+        "mode": "0644",
+        "substitutePrefix": true
+      },
+      {
+        "path": "/Library/LaunchDaemons/bc.8848.dshcontrol.control.plist",
+        "file": "Packaging/bc.8848.dshcontrol.control.plist",
+        "mode": "0644",
+        "substitutePrefix": true
+      },
+      {
+        "path": "/usr/libexec/dshcontrol-installer",
+        "file": "Packaging/dshcontrol-installer.sh",
+        "mode": "0755",
+        "substitutePrefix": true
+      },
+      {
+        "path": "/Library/LaunchDaemons/bc.8848.dshcontrol.installer.plist",
+        "file": "Packaging/bc.8848.dshcontrol.installer.plist",
+        "mode": "0644",
+        "substitutePrefix": true
       }
-    ]
+    ],
+    "maintainerScripts": {
+      "postinst": "Packaging/postinst",
+      "prerm": "Packaging/prerm"
+    }
   }
 }

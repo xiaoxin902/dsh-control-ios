@@ -1,0 +1,28 @@
+#!/bin/sh
+# Runs as root at install: load the daemons and make the installer's folders.
+set -e
+
+CONTROL_LABEL="bc.8848.dshcontrol.control"
+INSTALLER_LABEL="bc.8848.dshcontrol.installer"
+
+for LABEL in "$CONTROL_LABEL" "$INSTALLER_LABEL"; do
+	PLIST="@PREFIX@/Library/LaunchDaemons/${LABEL}.plist"
+	[ -f "$PLIST" ] || continue
+	launchctl bootout system "$PLIST" 2>/dev/null || true
+	launchctl bootout "system/${LABEL}" 2>/dev/null || true
+	launchctl bootout "user/501/${LABEL}" 2>/dev/null || true
+	launchctl bootout "gui/501/${LABEL}" 2>/dev/null || true
+	launchctl bootstrap system "$PLIST" 2>/dev/null || true
+done
+
+# The inbox is written by mobile (the dsh agent), so every folder is made one
+# level at a time and given to mobile: mkdir -p as root would leave the parents
+# root-owned, and the daemon then could not be triggered by a mobile write.
+BASE="@ROOTFS@/var/mobile/Documents/dsh"
+for D in "$BASE/inbox" "$BASE/installer" "$BASE/installer/done" "$BASE/installer/rejected"; do
+	[ -d "$D" ] && continue
+	mkdir -m 0755 "$D" 2>/dev/null || true
+	chown -h 501:501 "$D" 2>/dev/null || true
+done
+
+exit 0

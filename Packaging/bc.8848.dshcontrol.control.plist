@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+	Started by launchd whenever the app writes the request file, runs as
+	mobile (no root, no sandbox), does one start or stop and exits again.
+	This is what lets the app's buttons work without switching apps.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>bc.8848.dshcontrol.control</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>@PREFIX@/bin/sh</string>
+		<string>@PREFIX@/usr/libexec/dshcontrol-control</string>
+	</array>
+	<key>UserName</key>
+	<string>mobile</string>
+	<key>GroupName</key>
+	<string>mobile</string>
+	<key>WatchPaths</key>
+	<array>
+		<string>@ROOTFS@/var/mobile/Documents/dsh/.dshcontrol-request</string>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>ThrottleInterval</key>
+	<integer>1</integer>
+	<key>ProcessType</key>
+	<string>Background</string>
+</dict>
+</plist>

@@ -25,6 +25,16 @@
 	<true/>
 	<key>com.apple.private.security.no-sandbox</key>
 	<true/>
+	<!-- WebKit only starts a renderer for an app that declares a data
+	     container; the container brings a sandbox back, so the paths below
+	     are opened by explicit exception and the start/stop work happens in
+	     the unsandboxed helper app. -->
+	<key>com.apple.private.security.container-required</key>
+	<true/>
+	<key>com.apple.springboard.launchapplications</key>
+	<true/>
+	<key>com.apple.frontboard.launchapplications</key>
+	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<!-- The app lives in a sandbox that WebKit's content process needs, so

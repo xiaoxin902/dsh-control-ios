@@ -34,6 +34,11 @@ FOUNDATION_EXPORT void DSHLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 /// The newest http://127.0.0.1:3080/?token=… in the log, or nil.
 + (nullable NSString *)currentTokenURL;
 
+/// Makes one HTTP request to the web server: it only prints its token URL
+/// into the log after the first HTTP connection, so a bare TCP probe leaves
+/// the log without one.
++ (void)requestFrontPage;
+
 /// The pid dsh-web.pid names, 0 when the file is missing or unreadable.
 + (NSInteger)currentPID;
 
@@ -54,6 +59,38 @@ FOUNDATION_EXPORT void DSHLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 
 /// Deletes a pid file whose process is gone, so the next start is clean.
 + (void)removeStalePIDFile;
+
+/// Runs the session export (node22 + ~/.dsh/bin/dsh-session-export.js) and
+/// answers the newest Markdown it wrote, or nil with an NSError. Blocks for
+/// as long as the script runs (well under a second for a long session).
++ (nullable NSString *)exportLatestSessionWithError:(NSError *_Nullable *_Nullable)error;
+
+/// Diagnostic: what this build may do — executable checks, a spawn attempt and
+/// whether signalling another process is allowed. Runs only when the caller
+/// asks for it, and logs to /tmp/dsh-control.log.
++ (void)runCapabilitySelfCheck;
+
+/// Where the helper app leaves its answer for the main app.
+FOUNDATION_EXPORT NSString *const DSHHelperResultPath;
+
+/// The request and answer files of the LaunchDaemon that does start/stop.
+FOUNDATION_EXPORT NSString *const DSHControlRequestPath;
+FOUNDATION_EXPORT NSString *const DSHControlResultPath;
+
+/// YES when this package's control daemon is installed and loaded by launchd.
++ (BOOL)controlDaemonInstalled;
+/// Writes the request file that wakes the daemon. NO when it cannot be written.
++ (BOOL)requestControlCommand:(NSString *)command;
+/// The daemon's answer, only when it is newer than `timestamp`.
++ (nullable NSDictionary *)controlResultNewerThan:(NSTimeInterval)timestamp;
+/// Deletes the request file once its answer has been read.
++ (void)removeControlRequest;
+
+/// The helper app side: reports what it did.
++ (BOOL)writeHelperResult:(NSDictionary *)result command:(NSString *)command;
+/// The main app side: the answer, only when it is newer than `timestamp`.
++ (nullable NSDictionary *)helperResultNewerThan:(NSTimeInterval)timestamp;
++ (void)removeHelperResult;
 
 @end
 
