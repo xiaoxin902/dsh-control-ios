@@ -21,6 +21,20 @@
 - 一台**越狱**设备（Dopamine rootless / roothide）
 - 已经装好的 dsh：默认在 `/var/mobile/Documents/dsh`，含 `node22` 运行时与 `node_modules`
 
+### 运行时：Node.js 22
+
+dsh 的后端跑在 **Node.js 22** 上，本项目的启动、停止与导出都直接调用它的二进制
+`/var/jb/usr/local/bin/node22`。iOS 本身不带 Node，需要从越狱源安装：
+
+1. 在 Sileo / Zebra / Cydia 里添加源：**https://huayuarc.github.io**
+2. 在该源里搜索 **nodejs22**
+3. 安装 `nodejs22-ios-rootless`（rootless 引导）或对应的 roothide 包
+   - 本机实测：`nodejs22-ios-rootless 22.12.0-27`（`iphoneos-arm64`，Name 显示为 `Nodejs22-ios`）
+4. 装完确认路径：`/var/jb/usr/local/bin/node22` 存在且可执行
+
+iOS 没有 JIT，Node 必须以 `--jitless` 运行——App 与守护进程都是这样调用它的；
+找不到 `node22` 要么启动不了 dsh，要么会在加载 WebAssembly 时报错。
+
 ## 安装
 
 用包管理器安装 deb，或本地装：
