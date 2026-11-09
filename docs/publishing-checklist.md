@@ -1,34 +1,24 @@
 # 从私密转公开发布前的检查清单
 
-仓库现在是 **private**。改成 public 之前，这些必须处理——它们已经在 git 历史里了，
-所以"删除文件"是不够的，要么重写历史，要么另建一个干净仓库（推荐后者更省事）。
+仓库 **xiaoxin902/dsh-control-ios** 已经是干净的：历史两个提交里都没有个人文件
+（`Attachments/`、`dsh-memory/`、`dsh-docs/` 从未出现在这个仓库的历史中，
+它们仍留在本地项目的 `.private-archive/`，被 `.gitignore` 忽略）。
 
-## 必须清掉
+所以转公开只需要做最后几步，不必再重写历史。
 
-- `Attachments/` —— 设备截图，含状态栏、时间、电量等个人痕迹
-- `dsh-memory/AGENTS.md` —— 你个人写给 dsh 的指令与偏好
-- `dsh-docs/` —— 个人整理的文档副本
-- 任何 `*.bak-*` 备份文件
-- `/tmp` 路径与设备上真实的会话 id、包名里的个人线索（`tools/` 里的示例可以留）
+## 转公开前确认
 
-## 检查
+1. `README.md` 里"巨魔版未在真机验证"这段仍然属实
+2. `LICENSE` 的年份与署名（8848, 2026）
+3. `apelin-project.json` 里的包标识 `bc.8848.dshcontrol` 是你要长期用的
+4. 仓库里不含 token、密钥、设备 UDID、真实的会话 id
 
-```sh
-git log --all --stat | grep -iE 'Attachments|dsh-memory|dsh-docs|\.bak-'
-```
+## 转公开
 
-## 如果要保留历史
+GitHub → 仓库 → Settings → 最下面 **Danger Zone** → Change repository visibility → Public。
 
-```sh
-# 在新目录里重建，只带需要的文件
-git clone --no-hardlinks . ../dsh-control-public
-cd ../dsh-control-public
-git filter-repo --invert-paths --path Attachments --path dsh-memory --path dsh-docs  # 需安装 git-filter-repo
-```
+## 旧的 `dsh-control` 仓库
 
-## 发布前也确认
-
-- `LICENSE` 里的年份与署名
-- `README.md` 里"巨魔版未验证"这段仍然属实
-- `apelin-project.json` 里的包标识 `bc.8848.dshcontrol` 是你要长期用的
-- 仓库里不含任何 token、密钥、设备 UDID
+它是早期历史（含截图等个人文件），确认新仓库内容无误后删除：
+Settings → Danger Zone → Delete this repository。
+这个操作只能由账号所有者在网页上完成。
