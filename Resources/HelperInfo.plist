@@ -8,6 +8,16 @@
 	<string>DSH 助手</string>
 	<key>CFBundleExecutable</key>
 	<string>DSHHelper</string>
+		<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon60x60</string>
+			</array>
+		</dict>
+	</dict>
 	<key>CFBundleIdentifier</key>
 	<string>bc.8848.dshcontrol.helper</string>
 	<key>CFBundleInfoDictionaryVersion</key>

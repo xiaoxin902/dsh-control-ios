@@ -6,6 +6,16 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>DSH</string>
+		<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon60x60</string>
+			</array>
+		</dict>
+	</dict>
 	<key>CFBundleIdentifier</key>
 	<string>bc.8848.dshcontrol</string>
 	<key>CFBundleInfoDictionaryVersion</key>

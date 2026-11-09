@@ -53,7 +53,10 @@
       "headerSearchPaths": [
         "Sources"
       ],
-      "resources": [],
+      "resources": [
+        "Resources/AppIcon60x60@2x.png",
+        "Resources/AppIcon60x60@3x.png"
+      ],
       "infoPlist": "Resources/Info.plist",
       "entitlements": "Packaging/App.entitlements",
       "objcARC": true,
@@ -76,7 +79,10 @@
       "headerSearchPaths": [
         "Sources"
       ],
-      "resources": [],
+      "resources": [
+        "Resources/AppIcon60x60@2x.png",
+        "Resources/AppIcon60x60@3x.png"
+      ],
       "infoPlist": "Resources/HelperInfo.plist",
       "entitlements": "Packaging/Helper.entitlements",
       "objcARC": true,
