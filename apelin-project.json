@@ -159,7 +159,7 @@
   "package": {
     "id": "bc.8848.dshcontrol",
     "name": "DSH",
-    "version": "1.3.2",
+    "version": "1.3.3",
     "description": "控制本机 DeepSeek Harness（dsh）Web 服务：开机自启开关、运行状态、一键启动/停止与全屏打开",
     "longDescription": [
       "控制这台设备上已经装好的 DeepSeek Harness（dsh）。",

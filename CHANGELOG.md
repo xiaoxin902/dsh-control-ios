@@ -1,5 +1,10 @@
 # DSH 更新日志
 
+## 1.3.3（2026-11-10）
+
+- 移除 TrollStore 相关代码与注释（`-DTROLLSTORE` 分支、`runDirectExport`），
+  仓库里不再出现巨魔版说明；功能不变。
+
 ## 1.3.2（2026-11-09）
 
 - 运行环境改成可配置（`Sources/DSHConfig.m`，覆盖文件
