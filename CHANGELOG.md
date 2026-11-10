@@ -5,12 +5,6 @@
 - 运行环境改成可配置（`Sources/DSHConfig.m`，覆盖文件
   `/var/mobile/Documents/dsh-ts/config.json`）：node 路径、PATH、TMPDIR 不再是写死的
   `/var/jb/...`。越狱版不写这个文件，行为与之前完全一致。
-- 新增**巨魔（TrollStore）发行版**：`trollstore/` 目录里是独立的一套构建
-  （`-DTROLLSTORE=1` + 自己的 Info.plist / entitlements + `.tipa` 打包脚本），
-  不带守护进程，导出由 App 自己跑 node。
-  支持把 node22 打进包内（`NODE_BINARY=…`，97 MB → tipa 压缩后 32 MB），
-  绕开"用户目录里的临时签名二进制能否 exec"的不确定。
-  详见 `trollstore/README.md`；**未在 TrollStore 真机上验证**。
 
 ## 1.3.1（2026-11-09）
 

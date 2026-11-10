@@ -8,7 +8,7 @@ static NSString *const DSHDefaultPath =
     @"/var/jb/usr/local/bin:/var/jb/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin";
 static NSString *const DSHDefaultTmp = @"/var/mobile/Documents/dsh/tmp";
 
-/// /var/jb 只在越狱设备上存在；TrollStore 安装里 node 通常放在用户目录。
+/// 用户自带的 node 常放在 Documents 下，作为 /var/jb 之外的候选。
 static NSString *const DSHFallbackNode = @"/var/mobile/Documents/dsh-ts/bin/node22";
 
 NSDictionary<NSString *, NSString *> *DSHConfigValues(void) {
@@ -36,8 +36,7 @@ NSDictionary<NSString *, NSString *> *DSHConfigValues(void) {
 
 NSString *DSHConfigNodePath(void) {
     NSFileManager *manager = NSFileManager.defaultManager;
-    // 巨魔版可以把 node22 放进 .app 包内（TrollStore 安装时一起签名），
-    // 这条优先于任何配置：包内的是跟着 App 一起来的。
+    // 包内的 node22 优先于任何配置：它跟着 App 一起来，路径最确定。
     NSString *bundled = [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"bin/node22"];
     if ([manager isExecutableFileAtPath:bundled]) {
         return bundled;

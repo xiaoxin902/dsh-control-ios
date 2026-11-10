@@ -1,5 +1,5 @@
-// 运行环境探测：越狱安装里这些路径是固定的；TrollStore 安装里没有
-// /var/jb，用户也不一定把 dsh 放在默认位置，所以允许用一份 JSON 覆盖。
+// 运行环境探测：默认值与越狱引导下的实际位置一致；
+// 用户也可以放一份 JSON 覆盖 node 路径、PATH 与 TMPDIR。
 //
 // 覆盖文件：/var/mobile/Documents/dsh-ts/config.json
 // {

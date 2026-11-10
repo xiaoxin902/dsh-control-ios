@@ -578,13 +578,6 @@
     self.exportButton.enabled = NO;
     self.exportButton.alpha = 0.5;
 
-#if TROLLSTORE
-    // TrollStore 安装里没有控制守护进程：无沙箱的 App 自己就能读会话目录
-    // 并 spawn node，所以直接在这里导出，不走请求文件。
-    [self runDirectExport];
-    return;
-#endif
-
     NSTimeInterval stamp = NSDate.date.timeIntervalSince1970;
     if (![DSHService requestControlCommand:@"export"]) {
         self.exportButton.enabled = YES;
@@ -623,31 +616,6 @@
                 return;
             }
             DSHLog(@"export ok: %@", path);
-            [strongSelf presentShareSheetForPath:path];
-        });
-    });
-}
-
-/// TrollStore 版：App 自己 spawn node 跑导出脚本，再分享产物。
-- (void)runDirectExport {
-    __weak typeof(self) weakSelf = self;
-    dispatch_async(self.ioQueue, ^{
-        NSError *error = nil;
-        NSString *path = [DSHService exportLatestSessionWithError:&error];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            RootViewController *strongSelf = weakSelf;
-            if (!strongSelf) {
-                return;
-            }
-            strongSelf.exportButton.enabled = YES;
-            strongSelf.exportButton.alpha = 1.0;
-            if (path.length == 0) {
-                DSHLog(@"export (direct) failed: %@", error.localizedDescription);
-                [strongSelf showAlertWithTitle:@"导出失败"
-                                       message:error.localizedDescription ?: @"未知错误"];
-                return;
-            }
-            DSHLog(@"export (direct) ok: %@", path);
             [strongSelf presentShareSheetForPath:path];
         });
     });
