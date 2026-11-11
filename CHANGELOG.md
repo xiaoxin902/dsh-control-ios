@@ -1,5 +1,27 @@
 # DSH 更新日志
 
+## 1.4.3（2026-11-11）
+
+- 插件命令结果改成先缓冲、后一次写入，App 不会读到空的半截 JSON。
+- 可安装列表按文件名去重（同一个 tgz 放在两个目录时只显示一次）。
+
+## 1.4.2（2026-11-11）
+
+- 守护进程处理完请求后删除请求文件：StartInterval 轮询下不会重复执行同一条命令。
+- 插件命令直接写结果文件（去掉临时文件中转），并记录 start/done 轨迹到 /tmp/dsh-daemon.log。
+
+## 1.4.1（2026-11-11）
+
+- 控制守护进程加 StartInterval 4 秒兜底：重装/重载后 WatchPaths 可能不触发，
+  之前写入请求后长时间没有响应；现在最多 4 秒内处理。
+
+## 1.4.0（2026-11-11）
+
+- 新增「插件」页：列出已装插件、列出 ~/Documents/dsh-plugins 里的 .tgz，点一下安装，左滑移除。
+  App 沙箱看不到 ~/.dsh，所以读取与安装都交给控制守护进程（node22 + pnpm）。
+- 新增 tools/dsh-plugin.js，随包安装到 /usr/libexec/dsh-plugin.js。
+- 新增守护进程命令 plugin-list / plugin-install / plugin-remove。
+
 ## 1.3.3（2026-11-10）
 
 - 移除 TrollStore 相关代码与注释（`-DTROLLSTORE` 分支、`runDirectExport`），

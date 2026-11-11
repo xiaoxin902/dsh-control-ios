@@ -536,8 +536,15 @@ static BOOL DSHConnectSucceeds(uint16_t port, NSTimeInterval timeout) {
 }
 
 + (BOOL)requestControlCommand:(NSString *)command {
-    NSDictionary *request = @{ @"command": command ?: @"",
-                               @"time": @(NSDate.date.timeIntervalSince1970) };
+    return [self requestControlCommand:command target:nil];
+}
+
++ (BOOL)requestControlCommand:(NSString *)command target:(NSString *)target {
+    NSMutableDictionary *request = [@{ @"command": command ?: @"",
+                                       @"time": @(NSDate.date.timeIntervalSince1970) } mutableCopy];
+    if (target.length > 0) {
+        request[@"target"] = target;
+    }
     NSError *error = nil;
     NSData *data = [NSJSONSerialization dataWithJSONObject:request options:0 error:&error];
     if (!data) {

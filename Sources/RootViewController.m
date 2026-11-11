@@ -5,6 +5,7 @@
 
 #import "DSHService.h"
 #import "DSHWebViewController.h"
+#import "PluginViewController.h"
 
 @interface RootViewController ()
 
@@ -16,6 +17,7 @@
 @property (nonatomic, strong) UIButton *startButton;
 @property (nonatomic, strong) UIButton *stopButton;
 @property (nonatomic, strong) UIButton *exportButton;
+@property (nonatomic, strong) UIButton *pluginsButton;
 
 @property (nonatomic, strong) dispatch_queue_t ioQueue;
 @property (nonatomic, strong) NSTimer *refreshTimer;
@@ -199,9 +201,10 @@
     self.startButton = [self auxiliaryButtonWithTitle:@"启动" action:@selector(startTapped:)];
     self.stopButton = [self auxiliaryButtonWithTitle:@"停止" action:@selector(stopTapped:)];
     self.exportButton = [self auxiliaryButtonWithTitle:@"导出" action:@selector(exportTapped:)];
+    self.pluginsButton = [self auxiliaryButtonWithTitle:@"插件" action:@selector(pluginsTapped:)];
 
     UIStackView *auxRow = [[UIStackView alloc] initWithArrangedSubviews:@[
-        self.startButton, self.stopButton, self.exportButton
+        self.startButton, self.stopButton, self.exportButton, self.pluginsButton
     ]];
     auxRow.axis = UILayoutConstraintAxisHorizontal;
     auxRow.distribution = UIStackViewDistributionFillEqually;
@@ -619,6 +622,13 @@
             [strongSelf presentShareSheetForPath:path];
         });
     });
+}
+
+- (void)pluginsTapped:(UIButton *)sender {
+    PluginViewController *plugins = [[PluginViewController alloc] initWithStyle:UITableViewStyleInsetGrouped];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:plugins];
+    nav.modalPresentationStyle = UIModalPresentationPageSheet;
+    [self presentViewController:nav animated:YES completion:nil];
 }
 
 - (void)presentShareSheetForPath:(NSString *)path {

@@ -81,6 +81,8 @@ FOUNDATION_EXPORT NSString *const DSHControlResultPath;
 + (BOOL)controlDaemonInstalled;
 /// Writes the request file that wakes the daemon. NO when it cannot be written.
 + (BOOL)requestControlCommand:(NSString *)command;
+/// Same, with an extra "target" field (plugin path or package name).
++ (BOOL)requestControlCommand:(NSString *)command target:(nullable NSString *)target;
 /// The daemon's answer, only when it is newer than `timestamp`.
 + (nullable NSDictionary *)controlResultNewerThan:(NSTimeInterval)timestamp;
 /// Deletes the request file once its answer has been read.

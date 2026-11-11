@@ -22,6 +22,9 @@
 	<array>
 		<string>@ROOTFS@/var/mobile/Documents/dsh/.dshcontrol-request</string>
 	</array>
+	<!-- 兜底：WatchPaths 在重装/重载后有时不触发，每 4 秒看一眼请求文件 -->
+	<key>StartInterval</key>
+	<integer>4</integer>
 	<key>RunAtLoad</key>
 	<false/>
 	<key>ThrottleInterval</key>
