@@ -59,7 +59,7 @@ App 里没做的事情交给两个 launchd 守护进程，它们都以最小身�
 
 本项目在设备上构建，用 **Apelin** 这个 iOS IDE，构建描述是仓库根目录的 `apelin-project.json`。
 
-Apelin 的安装：在 Sileo / Zebra / Cydia 里添加越狱源 **https://apt.owngoal.dev**，
+Apelin 的安装：在 Sileo / Zebra / Cydia 里添加越狱源 https://apt.owngoal.dev，
 搜索 **Apelin** 安装。装上之后在它的工具链设置里准备 clang 工具链与 iPhoneOS SDK，
 打开本项目，`构建` 即可产出 deb。
 
