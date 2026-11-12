@@ -155,49 +155,6 @@ stop)
 		MSG=not-running
 	fi
 	;;
-export)
-	SCRIPT=/var/jb/usr/libexec/dsh-session-export.js
-	[ -f "$SCRIPT" ] || SCRIPT=/var/mobile/.dsh/bin/dsh-session-export.js
-	if [ -f "$SCRIPT" ]; then
-		HOME=/var/mobile TMPDIR=/tmp PATH=/var/jb/usr/local/bin:/var/jb/usr/bin:/usr/bin:/bin \
-			"$NODE" --jitless "$SCRIPT" >>/tmp/dsh-daemon.log 2>&1
-		RC=$?
-	else
-		RC=127
-	fi
-	if [ "$RC" = 0 ] && [ -s /var/mobile/Documents/dsh-backup/exports/latest.md ]; then
-		OK=true
-		MSG=exported
-	else
-		OK=false
-		MSG=export-failed
-		trace "export rc=$RC script=$SCRIPT"
-	fi
-	;;
-plugin-list | plugin-install | plugin-remove)
-	# The helper reads the request file itself (it needs "target"), talks to
-	# pnpm and prints the result JSON; this script only relays it.
-	HELPER=/var/jb/usr/libexec/dsh-plugin.js
-	[ -f "$HELPER" ] || HELPER=/var/mobile/Documents/dsh/bin/dsh-plugin.js
-	ACTION=${CMD#plugin-}
-	RC=127
-	if [ -f "$HELPER" ]; then
-		trace "plugin $ACTION start"
-		# 命令替换会把输出缓冲到结束，结果文件因此不会出现空的半截 JSON
-		OUT=$(HOME=/var/mobile TMPDIR=/tmp PATH=/var/jb/usr/local/bin:/var/jb/usr/bin:/usr/bin:/bin \
-			"$NODE" --jitless "$HELPER" "$REQ" "$ACTION" 2>>/tmp/dsh-daemon.log)
-		RC=$?
-		if [ "$RC" = 0 ] && [ -n "$OUT" ]; then
-			printf '%s\n' "$OUT" >"$RES"
-		else
-			trace "plugin $ACTION rc=$RC helper=$HELPER"
-			printf '{"ok":false,"message":"插件助手执行失败 rc=%s","installed":[],"available":[]}\n' "$RC" >"$RES"
-		fi
-	fi
-	trace "plugin $ACTION done rc=$RC"
-	rm -f "$REQ"
-	exit 0
-	;;
 esac
 
 printf '{"ok":%s,"message":"%s","command":"%s"}\n' "$OK" "$MSG" "$CMD" >"$RES"

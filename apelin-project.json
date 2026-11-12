@@ -159,7 +159,7 @@
   "package": {
     "id": "bc.8848.dshcontrol",
     "name": "DSH",
-    "version": "1.4.4",
+    "version": "1.6.0",
     "description": "控制本机 DeepSeek Harness（dsh）Web 服务：开机自启开关、运行状态、一键启动/停止与全屏打开",
     "longDescription": [
       "控制这台设备上已经装好的 DeepSeek Harness（dsh）。",
@@ -168,8 +168,6 @@
       "· 打开：从 /tmp/dsh-web.log 取最新 token 链接，全屏 WKWebView 打开，并为旧系统注入 JS 垫片",
       "· 启动/停止：由包内的 launchd 守护进程执行，不跳转界面",
       "· 打开前若日志里没有 token，会先请求一次服务端让它打印地址",
-      "· 导出：调用 dsh-session-export.js 把最新会话转成 Markdown，并弹系统分享面板",
-      "· 插件：列出/安装/移除 dsh 插件（守护进程执行 pnpm），左滑移除",
       "诊断日志：/tmp/dsh-control.log"
     ],
     "icon": "https://owngoal-dev.github.io/Apelin/icons/wiki.qaq.apelin.dev.app.png",
@@ -191,18 +189,6 @@
         "path": "/usr/libexec/dshcontrol-control",
         "file": "Packaging/dshcontrol-control.sh",
         "mode": "0755"
-      },
-      {
-        "path": "/usr/libexec/dsh-session-export.js",
-        "file": "tools/dsh-session-export.js",
-        "mode": "0644",
-        "substitutePrefix": true
-      },
-      {
-        "path": "/usr/libexec/dsh-plugin.js",
-        "file": "tools/dsh-plugin.js",
-        "mode": "0644",
-        "substitutePrefix": true
       },
       {
         "path": "/Library/LaunchDaemons/bc.8848.dshcontrol.control.plist",

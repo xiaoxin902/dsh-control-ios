@@ -60,11 +60,6 @@ FOUNDATION_EXPORT void DSHLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 /// Deletes a pid file whose process is gone, so the next start is clean.
 + (void)removeStalePIDFile;
 
-/// Runs the session export (node22 + ~/.dsh/bin/dsh-session-export.js) and
-/// answers the newest Markdown it wrote, or nil with an NSError. Blocks for
-/// as long as the script runs (well under a second for a long session).
-+ (nullable NSString *)exportLatestSessionWithError:(NSError *_Nullable *_Nullable)error;
-
 /// Diagnostic: what this build may do — executable checks, a spawn attempt and
 /// whether signalling another process is allowed. Runs only when the caller
 /// asks for it, and logs to /tmp/dsh-control.log.
@@ -81,8 +76,6 @@ FOUNDATION_EXPORT NSString *const DSHControlResultPath;
 + (BOOL)controlDaemonInstalled;
 /// Writes the request file that wakes the daemon. NO when it cannot be written.
 + (BOOL)requestControlCommand:(NSString *)command;
-/// Same, with an extra "target" field (plugin path or package name).
-+ (BOOL)requestControlCommand:(NSString *)command target:(nullable NSString *)target;
 /// The daemon's answer, only when it is newer than `timestamp`.
 + (nullable NSDictionary *)controlResultNewerThan:(NSTimeInterval)timestamp;
 /// Deletes the request file once its answer has been read.
