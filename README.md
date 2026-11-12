@@ -6,6 +6,8 @@
 不是 dsh 的分支，也不是它的官方客户端；它不联网，只跟本机 `127.0.0.1` 上的 dsh 打交道。
 （注：App 里嵌的 WebView 打开的仍是 dsh 自己的页面，那部分行为属于 dsh。）
 
+当前版本 **1.6.0**，两个构建：`rootless` 与 `roothide`。
+
 ## 功能
 
 - **开机自启开关**：创建/删除 `/var/mobile/Documents/dsh/autostart.off`
@@ -79,6 +81,17 @@ Packaging/              deb 布局、entitlements、launchd plist、安装脚本
 tools/                  tweak 构建脚本等辅助文件
 docs/                   发布相关说明
 ```
+
+## 已知问题
+
+- **在本机直连 GitHub 会校验证书失败**（`unable to verify the first certificate`）：
+  这台设备的信任链过不了 GitHub 的证书，`pnpm` 和 node 的 `fetch` 都一样。
+  影响的是"直接 `pnpm add https://github.com/…tgz`"这类操作。
+  可行的做法是先想办法把 tgz 拿到本地（别的设备、或临时关掉校验并自行核对内容），
+  再 `pnpm add /本地路径/x.tgz`。
+- **没有 JIT**：Node 必须以 `--jitless` 运行，`WebAssembly` 不存在，
+  任何依赖 WASM 的库在这台机器上都用不了。
+- **rootless 与 roothide 不能混装**：两者路径前缀不同，装错会直接不工作。
 
 ## 诊断
 
