@@ -35,10 +35,12 @@ iOS 没有 JIT，Node 必须以 `--jitless` 运行——App 与守护进程都�
 
 ## 安装
 
+当前版本 **1.6.0**：App 只有自启开关、状态、打开、启动/停止四项。
+
 用包管理器安装 deb，或本地装：
 
 ```
-dpkg -i bc.8848.dshcontrol_1.3.2_iphoneos-arm64.deb
+dpkg -i bc.8848.dshcontrol_<版本>_iphoneos-arm64.deb     # 或包管理器里直接装
 ```
 
 roothide 用户装 roothide 构建，rootless 用户装 rootless 构建，两者路径前缀不同，不能混装。
@@ -48,7 +50,8 @@ roothide 用户装 roothide 构建，rootless 用户装 rootless 构建，两者
 App 里没做的事情交给两个 launchd 守护进程，它们都以最小身份运行：
 
 - `bc.8848.dshcontrol.control`（**mobile** 身份）：由 App 写请求文件唤醒，负责启动/停止 dsh
-- `bc.8848.dshcontrol.installer`（**root** 身份）：只从 `inbox/` 安装受限的插件包
+- `bc.8848.dshcontrol.installer`（**root** 身份）：只从 `inbox/` 安装受限的**越狱插件包**（.deb，
+  与 dsh 自己的插件系统无关）
 
 ## 构建
 
@@ -86,8 +89,9 @@ docs/                   发布相关说明
 
 - 控制守护进程以 **mobile** 身份运行，不构成提权：任何 mobile 进程都能写它的请求文件，
   最坏结果是启动/停止 dsh。
-- root 守护进程只做一件事：从 `/var/mobile/Documents/dsh/inbox` 安装**受限**的插件包
+- root 守护进程只做一件事：从 `/var/mobile/Documents/dsh/inbox` 安装**受限的越狱插件包**
   （拒绝 preinst/postinst 等维护者脚本、拒绝 setuid、只允许写入插件目录）。
+  它不管理 dsh 的插件（那套是 profile 里的 pnpm 包，App 不参与）。
 - App 不联网，除 dsh 的本地端口和它的 WebView 外没有外部连接。
 
 ## 许可
