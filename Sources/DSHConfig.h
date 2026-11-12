@@ -1,11 +1,11 @@
 // 运行环境探测：默认值与越狱引导下的实际位置一致；
 // 用户也可以放一份 JSON 覆盖 node 路径、PATH 与 TMPDIR。
 //
-// 覆盖文件：/var/mobile/Documents/dsh-ts/config.json
+// 覆盖文件：/var/mobile/Documents/dsh-tools/config.json
 // {
 //   "dshDir":   "/var/mobile/Documents/dsh",
-//   "nodePath": "/var/mobile/Documents/dsh-ts/bin/node22",
-//   "path":     "/var/mobile/Documents/dsh-ts/bin:/var/jb/usr/bin:/usr/bin:/bin",
+//   "nodePath": "/var/mobile/Documents/dsh-tools/bin/node22",
+//   "path":     "/var/mobile/Documents/dsh-tools/bin:/var/jb/usr/bin:/usr/bin:/bin",
 //   "tmpDir":   "/var/mobile/Documents/dsh/tmp"
 // }
 // 缺字段就用默认值；解析失败也退回默认值，绝不因为配置写错而不启动。

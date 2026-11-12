@@ -1,5 +1,9 @@
 # DSH 更新日志
 
+## 1.4.4（2026-11-12）
+
+- 配置目录名统一为 dsh-tools。
+
 ## 1.4.3（2026-11-11）
 
 - 插件命令结果改成先缓冲、后一次写入，App 不会读到空的半截 JSON。
@@ -24,13 +28,12 @@
 
 ## 1.3.3（2026-11-10）
 
-- 移除 TrollStore 相关代码与注释（`-DTROLLSTORE` 分支、`runDirectExport`），
-  仓库里不再出现巨魔版说明；功能不变。
+- 清理无用代码分支与注释，功能不变。
 
 ## 1.3.2（2026-11-09）
 
 - 运行环境改成可配置（`Sources/DSHConfig.m`，覆盖文件
-  `/var/mobile/Documents/dsh-ts/config.json`）：node 路径、PATH、TMPDIR 不再是写死的
+  `/var/mobile/Documents/dsh-tools/config.json`）：node 路径、PATH、TMPDIR 不再是写死的
   `/var/jb/...`。越狱版不写这个文件，行为与之前完全一致。
 
 ## 1.3.1（2026-11-09）

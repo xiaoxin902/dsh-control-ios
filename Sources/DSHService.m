@@ -440,7 +440,7 @@ static BOOL DSHConnectSucceeds(uint16_t port, NSTimeInterval timeout) {
     if (![manager isExecutableFileAtPath:node]) {
         DSHLog(@"export: node missing, configured %@", node);
         if (error) {
-            *error = DSHMakeError(ENOENT, @"找不到 node22，请在 dsh-ts/config.json 里写 nodePath");
+            *error = DSHMakeError(ENOENT, @"找不到 node22，请在 dsh-tools/config.json 里写 nodePath");
         }
         return nil;
     }

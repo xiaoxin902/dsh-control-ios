@@ -1,6 +1,6 @@
 #import "DSHConfig.h"
 
-NSString *const DSHConfigPath = @"/var/mobile/Documents/dsh-ts/config.json";
+NSString *const DSHConfigPath = @"/var/mobile/Documents/dsh-tools/config.json";
 
 static NSString *const DSHDefaultDirectory = @"/var/mobile/Documents/dsh";
 static NSString *const DSHDefaultNode = @"/var/jb/usr/local/bin/node22";
@@ -9,7 +9,7 @@ static NSString *const DSHDefaultPath =
 static NSString *const DSHDefaultTmp = @"/var/mobile/Documents/dsh/tmp";
 
 /// 用户自带的 node 常放在 Documents 下，作为 /var/jb 之外的候选。
-static NSString *const DSHFallbackNode = @"/var/mobile/Documents/dsh-ts/bin/node22";
+static NSString *const DSHFallbackNode = @"/var/mobile/Documents/dsh-tools/bin/node22";
 
 NSDictionary<NSString *, NSString *> *DSHConfigValues(void) {
     NSMutableDictionary<NSString *, NSString *> *values = [@{
